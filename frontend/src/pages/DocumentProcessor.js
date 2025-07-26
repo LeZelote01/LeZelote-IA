@@ -18,7 +18,6 @@ import {
   Plus,
   X,
   FileImage,
-  FilePdf,
   FileSpreadsheet
 } from 'lucide-react';
 
@@ -117,7 +116,7 @@ const DocumentProcessor = () => {
   const getDocumentIcon = (type) => {
     switch (type) {
       case 'pdf':
-        return <FilePdf className="w-8 h-8 text-red-500" />;
+        return <FileText className="w-8 h-8 text-red-500" />;
       case 'image':
         return <FileImage className="w-8 h-8 text-blue-500" />;
       case 'spreadsheet':
