@@ -291,7 +291,7 @@ class Analytics(Base):
     date = Column(DateTime, default=func.now())
     metric_name = Column(String, nullable=False)
     metric_value = Column(Float)
-    metadata = Column(JSON)
+    meta_data = Column(JSON)
     created_at = Column(DateTime, default=func.now())
     
     # Relationships
