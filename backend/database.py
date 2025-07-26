@@ -34,14 +34,17 @@ def get_db():
 # Database initialization
 def init_db():
     """Initialize database tables"""
-    Base.metadata.create_all(bind=engine)
+    # Import all models to register them with Base
+    from models import Base as ModelsBase
+    ModelsBase.metadata.create_all(bind=engine)
 
 # Database health check
 def check_db_health():
     """Check database connection health"""
     try:
+        from sqlalchemy import text
         db = SessionLocal()
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         db.close()
         return True
     except Exception as e:

@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { mockData } from '../data/mockData';
+import { dashboardAPI } from '../services/api';
 import { 
   TrendingUp, 
   Clock, 
@@ -20,13 +20,37 @@ import {
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { analytics, workflows } = mockData;
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const stats = [
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const data = await dashboardAPI.getDashboard();
+        setDashboardData(data);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboard();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
+
+  const stats = dashboardData ? [
     {
       title: 'Workflows Actifs',
-      value: analytics.overview.activeWorkflows,
-      total: analytics.overview.totalWorkflows,
+      value: dashboardData.stats.active_workflows,
+      total: dashboardData.stats.total_workflows,
       icon: Activity,
       color: 'from-blue-500 to-purple-600',
       change: '+12%',
@@ -34,7 +58,7 @@ const Dashboard = () => {
     },
     {
       title: 'Exécutions ce mois',
-      value: analytics.overview.totalExecutions,
+      value: dashboardData.stats.total_executions,
       icon: TrendingUp,
       color: 'from-green-500 to-emerald-600',
       change: '+28%',
@@ -42,7 +66,7 @@ const Dashboard = () => {
     },
     {
       title: 'Temps économisé',
-      value: `${analytics.overview.timeSaved}h`,
+      value: `${dashboardData.stats.time_saved}h`,
       icon: Clock,
       color: 'from-orange-500 to-red-600',
       change: '+15%',
@@ -50,15 +74,13 @@ const Dashboard = () => {
     },
     {
       title: 'Coûts économisés',
-      value: `${analytics.overview.costSaved}€`,
+      value: `${dashboardData.stats.cost_saved}€`,
       icon: DollarSign,
       color: 'from-purple-500 to-pink-600',
       change: '+32%',
       changeType: 'positive'
     }
-  ];
-
-  const recentWorkflows = workflows.slice(0, 3);
+  ] : [];
 
   const quickActions = [
     {
@@ -157,7 +179,7 @@ const Dashboard = () => {
               </div>
               
               <div className="space-y-4">
-                {recentWorkflows.map((workflow) => (
+                {dashboardData?.recent_workflows?.map((workflow) => (
                   <div key={workflow.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors duration-200">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center">
@@ -176,14 +198,16 @@ const Dashboard = () => {
                         <span className="text-gray-300">•</span>
                         <span>{workflow.triggers} déclencheurs</span>
                       </div>
-                      {workflow.lastRun && (
+                      {workflow.last_run && (
                         <span>
-                          Dernière exécution: {new Date(workflow.lastRun).toLocaleDateString('fr-FR')}
+                          Dernière exécution: {new Date(workflow.last_run).toLocaleDateString('fr-FR')}
                         </span>
                       )}
                     </div>
                   </div>
-                ))}
+                )) || (
+                  <p className="text-gray-500 text-center py-4">Aucun workflow récent</p>
+                )}
               </div>
             </div>
           </div>
@@ -221,37 +245,41 @@ const Dashboard = () => {
                 Utilisation
               </h2>
               <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600">Workflows actifs</span>
-                    <span className="font-medium">{analytics.overview.activeWorkflows}/15</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${(analytics.overview.activeWorkflows / 15) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600">Exécutions mensuelles</span>
-                    <span className="font-medium">{analytics.overview.totalExecutions}/5000</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${(analytics.overview.totalExecutions / 5000) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
+                {dashboardData && (
+                  <>
+                    <div>
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-gray-600">Workflows actifs</span>
+                        <span className="font-medium">{dashboardData.stats.active_workflows}/15</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${(dashboardData.stats.active_workflows / 15) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-gray-600">Exécutions mensuelles</span>
+                        <span className="font-medium">{dashboardData.stats.total_executions}/5000</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${(dashboardData.stats.total_executions / 5000) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </>
+                )}
                 
                 <div className="pt-4 border-t border-gray-200">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Plan actuel</span>
                     <span className="text-sm font-medium text-purple-600 capitalize">
-                      {user?.subscription?.plan || 'Pro'}
+                      Pro
                     </span>
                   </div>
                 </div>

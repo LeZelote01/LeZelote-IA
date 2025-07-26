@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { mockData } from '../data/mockData';
+import { authAPI } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -16,50 +16,90 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate checking for existing session
-    const storedUser = localStorage.getItem('lezelote-user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    // Check for existing session
+    const checkAuth = async () => {
+      const storedUser = localStorage.getItem('lezelote-user');
+      const token = localStorage.getItem('authToken');
+      
+      if (storedUser && token) {
+        try {
+          // Verify token is still valid
+          const currentUser = await authAPI.getCurrentUser();
+          setUser(currentUser);
+        } catch (error) {
+          // Token invalid, clear storage
+          localStorage.removeItem('lezelote-user');
+          localStorage.removeItem('authToken');
+        }
+      }
+      setLoading(false);
+    };
+    
+    checkAuth();
   }, []);
 
   const login = async (email, password) => {
     setLoading(true);
-    // Mock login - in real app, this would call the API
-    const mockUser = mockData.user;
-    if (email === mockUser.email && password === 'password') {
-      setUser(mockUser);
-      localStorage.setItem('lezelote-user', JSON.stringify(mockUser));
+    try {
+      const response = await authAPI.login(email, password);
+      const { access_token } = response;
+      
+      // Store token
+      localStorage.setItem('authToken', access_token);
+      
+      // Get user info
+      const currentUser = await authAPI.getCurrentUser();
+      setUser(currentUser);
+      localStorage.setItem('lezelote-user', JSON.stringify(currentUser));
+      
       setLoading(false);
       return { success: true };
+    } catch (error) {
+      setLoading(false);
+      return { 
+        success: false, 
+        error: error.response?.data?.detail || 'Échec de connexion' 
+      };
     }
-    setLoading(false);
-    return { success: false, error: 'Invalid credentials' };
   };
 
   const register = async (userData) => {
     setLoading(true);
-    // Mock registration
-    const newUser = {
-      ...userData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      subscription: {
-        plan: 'starter',
-        status: 'active',
-        nextBilling: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-      }
-    };
-    setUser(newUser);
-    localStorage.setItem('lezelote-user', JSON.stringify(newUser));
-    setLoading(false);
-    return { success: true };
+    try {
+      const newUser = await authAPI.register(userData);
+      
+      // Auto-login after registration
+      const loginResult = await login(userData.email, userData.password);
+      
+      setLoading(false);
+      return loginResult;
+    } catch (error) {
+      setLoading(false);
+      return { 
+        success: false, 
+        error: error.response?.data?.detail || 'Échec d\'inscription' 
+      };
+    }
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('lezelote-user');
+    localStorage.removeItem('authToken');
+  };
+
+  const updateUser = async (userData) => {
+    try {
+      const updatedUser = await authAPI.updateCurrentUser(userData);
+      setUser(updatedUser);
+      localStorage.setItem('lezelote-user', JSON.stringify(updatedUser));
+      return { success: true };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error.response?.data?.detail || 'Échec de mise à jour' 
+      };
+    }
   };
 
   const value = {
@@ -67,6 +107,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    updateUser,
     loading
   };
 
