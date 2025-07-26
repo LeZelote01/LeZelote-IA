@@ -13,7 +13,13 @@ import {
   Sun, 
   Menu, 
   X,
-  LogOut
+  LogOut,
+  FileText,
+  Target,
+  Mail,
+  Headphones,
+  Code,
+  Zap
 } from 'lucide-react';
 
 const Header = () => {
@@ -27,8 +33,14 @@ const Header = () => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Workflows', href: '/workflows', icon: Workflow },
+    { name: 'Builder', href: '/builder', icon: Zap },
     { name: 'Chat IA', href: '/chat', icon: MessageCircle },
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+    { name: 'Documents', href: '/documents', icon: FileText },
+    { name: 'Leads', href: '/leads', icon: Target },
+    { name: 'Email', href: '/email', icon: Mail },
+    { name: 'Support', href: '/support', icon: Headphones },
+    { name: 'API', href: '/api', icon: Code },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
@@ -52,7 +64,7 @@ const Header = () => {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
+          <nav className="hidden lg:flex space-x-4">
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.href;
@@ -126,7 +138,7 @@ const Header = () => {
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
             >
               {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -136,8 +148,8 @@ const Header = () => {
 
       {/* Mobile Navigation */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200">
-          <div className="px-2 pt-2 pb-3 space-y-1">
+        <div className="lg:hidden bg-white border-t border-gray-200">
+          <div className="px-2 pt-2 pb-3 space-y-1 max-h-96 overflow-y-auto">
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.href;
