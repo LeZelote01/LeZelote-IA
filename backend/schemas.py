@@ -379,7 +379,7 @@ class AiModelResponse(AiModelBase):
 class AnalyticsBase(BaseSchema):
     metric_name: str
     metric_value: float
-    metadata: Optional[Dict[str, Any]] = None
+    meta_data: Optional[Dict[str, Any]] = None
 
 class AnalyticsCreate(AnalyticsBase):
     pass
