@@ -34,7 +34,9 @@ def get_db():
 # Database initialization
 def init_db():
     """Initialize database tables"""
-    Base.metadata.create_all(bind=engine)
+    # Import all models to register them with Base
+    from models import Base as ModelsBase
+    ModelsBase.metadata.create_all(bind=engine)
 
 # Database health check
 def check_db_health():
